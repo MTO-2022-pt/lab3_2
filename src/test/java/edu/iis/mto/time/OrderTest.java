@@ -39,6 +39,8 @@ class OrderTest {
         } catch (OrderExpiredException e) {
             fail(e.getMessage());
         }
+        Order.State orderState = order.getOrderState();
+        assertEquals(orderState, Order.State.CONFIRMED);
     }
 
     @Test
@@ -52,4 +54,19 @@ class OrderTest {
         assertEquals(orderState, Order.State.CANCELLED);
     }
 
+    @Test
+    void hourPassed() {
+
+        Instant expirationTime = date.plus(1, ChronoUnit.HOURS);
+        when(clockMock.instant()).thenReturn(date).thenReturn(expirationTime);
+        try {
+            order.submit();
+            order.confirm();
+            assertSame(Order.State.CONFIRMED, order.getOrderState());
+        } catch (OrderExpiredException e) {
+            fail(e.getMessage());
+        }
+        Order.State orderState = order.getOrderState();
+        assertEquals(orderState, Order.State.CONFIRMED);
+    }
 }
