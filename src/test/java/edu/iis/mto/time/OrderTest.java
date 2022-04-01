@@ -1,5 +1,6 @@
 package edu.iis.mto.time;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +29,7 @@ class OrderTest {
     }
 
     @Test
-    void sameTime() {
+    void sameTimeOrder() {
         Instant expirationTime = date.plus(0, ChronoUnit.HOURS);
         when(clockMock.instant()).thenReturn(date).thenReturn(expirationTime);
         try {
@@ -38,6 +39,17 @@ class OrderTest {
         } catch (OrderExpiredException e) {
             fail(e.getMessage());
         }
+    }
+
+    @Test
+    void expiredOrder() {
+        Instant expirationTime = date.plus(9999999, ChronoUnit.HOURS);
+        when(clockMock.instant()).thenReturn(date).thenReturn(expirationTime);
+        order.addItem(new OrderItem());
+        order.submit();
+        Assertions.assertThrows(OrderExpiredException.class, () -> order.confirm());
+        Order.State orderState = order.getOrderState();
+        assertEquals(orderState, Order.State.CANCELLED);
     }
 
 }
