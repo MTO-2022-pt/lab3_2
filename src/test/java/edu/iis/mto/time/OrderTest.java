@@ -66,6 +66,26 @@ class OrderTest {
         assertEquals(order.getOrderState(), Order.State.CONFIRMED);
     }
 
+    @Test
+    void OneDayAndABitMoreFromNowFiveOrderItemsStateTest() { //more than 24 hours... correct?
+        Order order = new Order(LocalDateTime.now().plusDays(1).plusHours(1));
+        for(int i = 0; i< 5; i++){
+            order.addItem(new OrderItem());
+        }
+        order.submit();
+        order.confirm();
+        assertEquals(order.getOrderState(), Order.State.CONFIRMED);
+    }
 
+    @Test
+    void OneDayAndTwoHoursFromNowFiveOrderItemsStateTest() {
+        Order order = new Order(LocalDateTime.now().plusDays(1).plusHours(2));
+        for(int i = 0; i< 5; i++){
+            order.addItem(new OrderItem());
+        }
+        order.submit();
+        assertThrows(OrderExpiredException.class, order::confirm);
+        assertEquals(order.getOrderState(), Order.State.CANCELLED);
+    }
 
 }
