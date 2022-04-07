@@ -1,21 +1,21 @@
 package edu.iis.mto.time;
 
 import static org.junit.jupiter.api.Assertions.*;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.internal.matchers.Or;
-
 import java.time.LocalDateTime;
-import java.time.Month;
 
 
 class OrderTest {
 
-    Order order;
-
     @BeforeEach
     void setUp(){
+    }
+
+    @Test
+    void OneSecondEmptyOrderItemStateTest() {
+        Order order = new Order(LocalDateTime.now().plusSeconds(1));
+        assertEquals(order.getOrderState(), Order.State.CREATED);
     }
 
     @Test
@@ -29,6 +29,16 @@ class OrderTest {
     void tenMinutesFromNowOneOrderItemStateTest() {
         Order order = new Order(LocalDateTime.now().plusMinutes(10));
         order.addItem(new OrderItem());
+        order.submit();
+        assertEquals(order.getOrderState(), Order.State.SUBMITTED);
+    }
+
+    @Test
+    void tenMinutesFromNowFiveOrderItemsStateTest() {
+        Order order = new Order(LocalDateTime.now().plusMinutes(10));
+        for(int i = 0; i< 5; i++){
+            order.addItem(new OrderItem());
+        }
         order.submit();
         assertEquals(order.getOrderState(), Order.State.SUBMITTED);
     }
@@ -78,6 +88,17 @@ class OrderTest {
     }
 
     @Test
+    void timeoutOrderStatesTest() {
+        Order order = new Order(LocalDateTime.now().plusDays(1).plusHours(1).plusSeconds(1));
+        for(int i = 0; i< 5; i++){
+            order.addItem(new OrderItem());
+        }
+        order.submit();
+        assertThrows(OrderExpiredException.class, order::confirm);
+        assertEquals(order.getOrderState(), Order.State.CANCELLED);
+    }
+
+    @Test
     void OneDayAndTwoHoursFromNowFiveOrderItemsStateTest() {
         Order order = new Order(LocalDateTime.now().plusDays(1).plusHours(2));
         for(int i = 0; i< 5; i++){
@@ -86,6 +107,20 @@ class OrderTest {
         order.submit();
         assertThrows(OrderExpiredException.class, order::confirm);
         assertEquals(order.getOrderState(), Order.State.CANCELLED);
+        assertThrows(OrderStateException.class, order::realize);
+        assertEquals(order.getOrderState(), Order.State.CANCELLED);
+    }
+
+    @Test
+    void tenMinutesFromNowFiveOrderItemsRealizedStateTest() {
+        Order order = new Order(LocalDateTime.now().plusMinutes(10));
+        for(int i = 0; i< 5; i++){
+            order.addItem(new OrderItem());
+        }
+        order.submit();
+        order.confirm();
+        order.realize();
+        assertEquals(order.getOrderState(), Order.State.REALIZED);
     }
 
 }
