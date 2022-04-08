@@ -1,7 +1,6 @@
 package edu.iis.mto.time;
 
-import static edu.iis.mto.time.Order.State.CANCELLED;
-import static edu.iis.mto.time.Order.State.CREATED;
+import static edu.iis.mto.time.Order.State.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +45,13 @@ class OrderTest {
     void addedItemExpectingCreatedState() {
         validOrderInstance.submit();
         validOrderInstance.addItem(new OrderItem());
-        assertEquals(CREATED,expiredOrderInstance.getOrderState());
+        assertEquals(CREATED,validOrderInstance.getOrderState());
     }
 
+    @Test
+    void validSubmisionExpectingSubmittedState() {
+        validOrderInstance.addItem(new OrderItem());
+        validOrderInstance.submit();
+        assertEquals(SUBMITTED,validOrderInstance.getOrderState());
+    }
 }
