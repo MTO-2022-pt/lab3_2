@@ -3,6 +3,7 @@ package edu.iis.mto.time;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Order {
@@ -42,7 +43,7 @@ public class Order {
 
     public void confirm() {
         requireState(State.SUBMITTED);
-        long hoursElapsedAfterSubmittion = subbmitionDate.until((testPurposesDatatime == null) ? LocalDateTime.now():testPurposesDatatime, ChronoUnit.HOURS);
+        long hoursElapsedAfterSubmittion = subbmitionDate.until((testPurposesDatatime == null) ? LocalDateTime.now() : testPurposesDatatime, ChronoUnit.HOURS);
         if (hoursElapsedAfterSubmittion > VALID_PERIOD_HOURS) {
             orderState = State.CANCELLED;
             throw new OrderExpiredException();
@@ -67,9 +68,9 @@ public class Order {
         }
 
         throw new OrderStateException("order should be in state "
-                                      + allowedStates
-                                      + " to perform required  operation, but is in "
-                                      + orderState);
+                + Arrays.toString(allowedStates)
+                + " to perform required  operation, but is in "
+                + orderState);
 
     }
 

@@ -15,7 +15,7 @@ class OrderTest {
     private Order validOrderInstance;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         expired = LocalDateTime.now().plusHours(25).plusMinutes(1);
         expiredOrderInstance = new Order(expired);
         validOrderInstance = new Order();
