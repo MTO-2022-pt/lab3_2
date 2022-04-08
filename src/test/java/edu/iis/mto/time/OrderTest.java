@@ -28,11 +28,33 @@ class OrderTest {
     }
 
     @Test
-    void expiredEmptyOrder() {
+    void expiredEmptyOrderThrows() {
         testOrder = new Order(LocalDateTime.now().plusDays(2));
         testOrder.submit();
         assertThrows(OrderExpiredException.class, () -> testOrder.confirm());
-        assertEquals(Order.State.CANCELLED, testOrder.getOrderState());
+    }
+
+    @Test
+    void expiredEmptyOrderStateTest(){
+        testOrder = new Order(LocalDateTime.now().plusDays(2));
+        testOrder.submit();
+        try{
+            testOrder.confirm();
+        }catch(OrderExpiredException e){
+            assertEquals(Order.State.CANCELLED, testOrder.getOrderState());
+        }
+    }
+
+    @Test
+    void coupleHoursOldOrder(){
+        testOrder = new Order(LocalDateTime.now().plusHours(5));
+        testOrder.submit();
+        try{
+            testOrder.confirm();
+        }catch(OrderExpiredException e){
+            fail(e.getMessage());
+        }
+        assertEquals(Order.State.CONFIRMED, testOrder.getOrderState());
     }
 
     @Test
@@ -75,8 +97,9 @@ class OrderTest {
         assertEquals(Order.State.CONFIRMED, testOrder.getOrderState());
         testOrder.realize();
         assertEquals(Order.State.REALIZED, testOrder.getOrderState());
-
     }
+
+
 
 
 }
