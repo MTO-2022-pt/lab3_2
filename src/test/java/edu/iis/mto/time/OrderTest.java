@@ -54,4 +54,12 @@ class OrderTest {
         validOrderInstance.submit();
         assertEquals(SUBMITTED,validOrderInstance.getOrderState());
     }
+
+    @Test
+    void validConfirmExpectingConfirmedState() {
+        validOrderInstance.addItem(new OrderItem());
+        validOrderInstance.submit();
+        validOrderInstance.confirm();
+        assertEquals(CONFIRMED,validOrderInstance.getOrderState());
+    }
 }
