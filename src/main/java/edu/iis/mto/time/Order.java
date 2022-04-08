@@ -12,9 +12,17 @@ public class Order {
     private List<OrderItem> items = new ArrayList<>();
     private LocalDateTime subbmitionDate;
 
+    private LocalDateTime testPurposesDatatime = null;
+
     public Order() {
         orderState = State.CREATED;
     }
+
+    public Order(LocalDateTime testTime) {
+        orderState = State.CREATED;
+        testPurposesDatatime = testTime;
+    }
+
 
     public void addItem(OrderItem item) {
         requireState(State.CREATED, State.SUBMITTED);
@@ -34,7 +42,7 @@ public class Order {
 
     public void confirm() {
         requireState(State.SUBMITTED);
-        long hoursElapsedAfterSubmittion = subbmitionDate.until(LocalDateTime.now(), ChronoUnit.HOURS);
+        long hoursElapsedAfterSubmittion = subbmitionDate.until((testPurposesDatatime == null) ? LocalDateTime.now():testPurposesDatatime, ChronoUnit.HOURS);
         if (hoursElapsedAfterSubmittion > VALID_PERIOD_HOURS) {
             orderState = State.CANCELLED;
             throw new OrderExpiredException();
