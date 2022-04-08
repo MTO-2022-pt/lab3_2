@@ -72,4 +72,13 @@ class OrderTest {
             assertThrowsExactly(OrderStateException.class,()->expiredOrderInstance.addItem(new OrderItem()));
         }
     }
+
+    @Test
+    void validRealizeCallExpectingRealizedState() {
+        validOrderInstance.addItem(new OrderItem());
+        validOrderInstance.submit();
+        validOrderInstance.confirm();
+        validOrderInstance.realize();
+        assertEquals(REALIZED,validOrderInstance.getOrderState());
+    }
 }
