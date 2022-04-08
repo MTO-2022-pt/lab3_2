@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Order {
 
@@ -11,8 +12,15 @@ public class Order {
     private State orderState;
     private List<OrderItem> items = new ArrayList<>();
     private LocalDateTime subbmitionDate;
+    private final LocalDateTime testTime;
+
+    public Order(LocalDateTime time){
+        testTime = time;
+        orderState = State.CREATED;
+    }
 
     public Order() {
+        testTime = null;
         orderState = State.CREATED;
     }
 
@@ -34,7 +42,7 @@ public class Order {
 
     public void confirm() {
         requireState(State.SUBMITTED);
-        long hoursElapsedAfterSubmittion = subbmitionDate.until(LocalDateTime.now(), ChronoUnit.HOURS);
+        long hoursElapsedAfterSubmittion = subbmitionDate.until(Objects.requireNonNullElseGet(testTime, LocalDateTime::now), ChronoUnit.HOURS);
         if (hoursElapsedAfterSubmittion > VALID_PERIOD_HOURS) {
             orderState = State.CANCELLED;
             throw new OrderExpiredException();
