@@ -13,6 +13,7 @@ class OrderTest {
     private LocalDateTime expired;
     private Order expiredOrderInstance;
     private Order validOrderInstance;
+
     @BeforeEach
     void setUp() throws Exception {
         expired = LocalDateTime.now().plusHours(25).plusMinutes(1);
@@ -23,36 +24,36 @@ class OrderTest {
     @Test
     void orderExpiredThrowsOrderExpiredException() {
         expiredOrderInstance.submit();
-        assertThrowsExactly(OrderExpiredException.class,()->expiredOrderInstance.confirm());
+        assertThrowsExactly(OrderExpiredException.class, () -> expiredOrderInstance.confirm());
     }
 
     @Test
     void orderExpiredExpectingCancelledState() {
-        try{
+        try {
             expiredOrderInstance.submit();
             expiredOrderInstance.confirm();
-        }catch(OrderExpiredException e){
-            assertEquals(CANCELLED,expiredOrderInstance.getOrderState());
+        } catch (OrderExpiredException e) {
+            assertEquals(CANCELLED, expiredOrderInstance.getOrderState());
         }
     }
 
     @Test
     void orderCreatedExpectingCreatedState() {
-        assertEquals(CREATED,expiredOrderInstance.getOrderState());
+        assertEquals(CREATED, expiredOrderInstance.getOrderState());
     }
 
     @Test
     void addedItemExpectingCreatedState() {
         validOrderInstance.submit();
         validOrderInstance.addItem(new OrderItem());
-        assertEquals(CREATED,validOrderInstance.getOrderState());
+        assertEquals(CREATED, validOrderInstance.getOrderState());
     }
 
     @Test
     void validSubmisionExpectingSubmittedState() {
         validOrderInstance.addItem(new OrderItem());
         validOrderInstance.submit();
-        assertEquals(SUBMITTED,validOrderInstance.getOrderState());
+        assertEquals(SUBMITTED, validOrderInstance.getOrderState());
     }
 
     @Test
@@ -60,16 +61,16 @@ class OrderTest {
         validOrderInstance.addItem(new OrderItem());
         validOrderInstance.submit();
         validOrderInstance.confirm();
-        assertEquals(CONFIRMED,validOrderInstance.getOrderState());
+        assertEquals(CONFIRMED, validOrderInstance.getOrderState());
     }
 
     @Test
     void addingItemToExpiredOrderExpectingOrderStateException() {
-        try{
+        try {
             expiredOrderInstance.submit();
             expiredOrderInstance.confirm();
-        }catch(OrderExpiredException e){
-            assertThrowsExactly(OrderStateException.class,()->expiredOrderInstance.addItem(new OrderItem()));
+        } catch (OrderExpiredException e) {
+            assertThrowsExactly(OrderStateException.class, () -> expiredOrderInstance.addItem(new OrderItem()));
         }
     }
 
@@ -79,6 +80,14 @@ class OrderTest {
         validOrderInstance.submit();
         validOrderInstance.confirm();
         validOrderInstance.realize();
-        assertEquals(REALIZED,validOrderInstance.getOrderState());
+        assertEquals(REALIZED, validOrderInstance.getOrderState());
+    }
+
+    @Test
+    void invalidRealizeCallExpectingOrderStateException() {
+        validOrderInstance.addItem(new OrderItem());
+        validOrderInstance.submit();
+
+        assertThrowsExactly(OrderStateException.class, () -> validOrderInstance.realize());
     }
 }
