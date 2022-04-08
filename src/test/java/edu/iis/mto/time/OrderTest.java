@@ -52,6 +52,31 @@ class OrderTest {
         assertEquals(Order.State.REALIZED, testOrder.getOrderState());
     }
 
+    @Test
+    void orderStateAfterAddingItem(){
+        testOrder = new Order(LocalDateTime.now());
+        testOrder.addItem(new OrderItem());
+        assertEquals(Order.State.CREATED, testOrder.getOrderState());
+        testOrder.submit();
+        assertEquals(Order.State.SUBMITTED, testOrder.getOrderState());
+        testOrder.addItem(new OrderItem());
+        assertEquals(Order.State.CREATED, testOrder.getOrderState());
+    }
+
+    @Test
+    void thoroughBehaviorTest(){
+        testOrder = new Order(LocalDateTime.now());
+        assertEquals(Order.State.CREATED, testOrder.getOrderState());
+        testOrder.addItem(new OrderItem());
+        assertEquals(Order.State.CREATED, testOrder.getOrderState());
+        testOrder.submit();
+        assertEquals(Order.State.SUBMITTED, testOrder.getOrderState());
+        testOrder.confirm();
+        assertEquals(Order.State.CONFIRMED, testOrder.getOrderState());
+        testOrder.realize();
+        assertEquals(Order.State.REALIZED, testOrder.getOrderState());
+
+    }
 
 
 }
