@@ -62,4 +62,14 @@ class OrderTest {
         validOrderInstance.confirm();
         assertEquals(CONFIRMED,validOrderInstance.getOrderState());
     }
+
+    @Test
+    void addingItemToExpiredOrderExpectingOrderStateException() {
+        try{
+            expiredOrderInstance.submit();
+            expiredOrderInstance.confirm();
+        }catch(OrderExpiredException e){
+            assertThrowsExactly(OrderStateException.class,()->expiredOrderInstance.addItem(new OrderItem()));
+        }
+    }
 }
