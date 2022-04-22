@@ -1,8 +1,10 @@
 package edu.iis.mto.time;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Order {
@@ -10,9 +12,16 @@ public class Order {
     private static final long VALID_PERIOD_HOURS = 24;
     private State orderState;
     private List<OrderItem> items = new ArrayList<>();
-    private LocalDateTime subbmitionDate;
+    private LocalDateTime submissionDate;
+    private final Clock clock;
 
     public Order() {
+        orderState = State.CREATED;
+        this.clock = Clock.systemDefaultZone();
+    }
+
+    public Order(Clock clock) {
+        this.clock = clock;
         orderState = State.CREATED;
     }
 
@@ -28,14 +37,14 @@ public class Order {
         requireState(State.CREATED);
 
         orderState = State.SUBMITTED;
-        subbmitionDate = LocalDateTime.now();
+        submissionDate = LocalDateTime.now(clock);
 
     }
 
     public void confirm() {
         requireState(State.SUBMITTED);
-        long hoursElapsedAfterSubmittion = subbmitionDate.until(LocalDateTime.now(), ChronoUnit.HOURS);
-        if (hoursElapsedAfterSubmittion > VALID_PERIOD_HOURS) {
+        long hoursElapsedAfterSubmission = submissionDate.until(LocalDateTime.now(clock), ChronoUnit.HOURS);
+        if (hoursElapsedAfterSubmission > VALID_PERIOD_HOURS) {
             orderState = State.CANCELLED;
             throw new OrderExpiredException();
         }
@@ -59,7 +68,7 @@ public class Order {
         }
 
         throw new OrderStateException("order should be in state "
-                                      + allowedStates
+                                      + Arrays.toString(allowedStates)
                                       + " to perform required  operation, but is in "
                                       + orderState);
 
