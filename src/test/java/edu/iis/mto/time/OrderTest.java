@@ -2,92 +2,114 @@ package edu.iis.mto.time;
 
 import static edu.iis.mto.time.Order.State.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 
-
+@ExtendWith(MockitoExtension.class)
 class OrderTest {
-    private LocalDateTime expired;
-    private Order expiredOrderInstance;
-    private Order validOrderInstance;
+    private static final int EXPIRED_HOURS = 25;
+    private static final int NON_EXPIRED_HOURS = 1;
+    private Order mockedOrderInstance;
+
+    @Mock
+    private Clock mockedClock;
 
     @BeforeEach
     void setUp() {
-        expired = LocalDateTime.now().plusHours(25).plusMinutes(1);
-        expiredOrderInstance = new Order(expired);
-        validOrderInstance = new Order();
+        lenient().when(mockedClock.getZone()).thenReturn(ZoneId.systemDefault());
+        mockedOrderInstance = new Order(mockedClock);
     }
 
     @Test
     void orderExpiredThrowsOrderExpiredException() {
-        expiredOrderInstance.submit();
-        assertThrowsExactly(OrderExpiredException.class, () -> expiredOrderInstance.confirm());
+        setHoursForNextCall(EXPIRED_HOURS);
+        mockedOrderInstance.submit();
+        assertThrowsExactly(OrderExpiredException.class, () -> mockedOrderInstance.confirm());
     }
 
     @Test
     void orderExpiredExpectingCancelledState() {
+        setHoursForNextCall(EXPIRED_HOURS);
         try {
-            expiredOrderInstance.submit();
-            expiredOrderInstance.confirm();
+            mockedOrderInstance.submit();
+            mockedOrderInstance.confirm();
         } catch (OrderExpiredException e) {
-            assertEquals(CANCELLED, expiredOrderInstance.getOrderState());
+            assertEquals(CANCELLED, mockedOrderInstance.getOrderState());
         }
     }
 
     @Test
     void orderCreatedExpectingCreatedState() {
-        assertEquals(CREATED, expiredOrderInstance.getOrderState());
+        assertEquals(CREATED, mockedOrderInstance.getOrderState());
     }
 
     @Test
     void addedItemExpectingCreatedState() {
-        validOrderInstance.submit();
-        validOrderInstance.addItem(new OrderItem());
-        assertEquals(CREATED, validOrderInstance.getOrderState());
+        setHoursForNextCall(NON_EXPIRED_HOURS);
+        mockedOrderInstance.submit();
+        mockedOrderInstance.addItem(new OrderItem());
+        assertEquals(CREATED, mockedOrderInstance.getOrderState());
     }
 
     @Test
     void validSubmisionExpectingSubmittedState() {
-        validOrderInstance.addItem(new OrderItem());
-        validOrderInstance.submit();
-        assertEquals(SUBMITTED, validOrderInstance.getOrderState());
+        setHoursForNextCall(NON_EXPIRED_HOURS);
+        mockedOrderInstance.addItem(new OrderItem());
+        mockedOrderInstance.submit();
+        assertEquals(SUBMITTED, mockedOrderInstance.getOrderState());
     }
 
     @Test
     void validConfirmExpectingConfirmedState() {
-        validOrderInstance.addItem(new OrderItem());
-        validOrderInstance.submit();
-        validOrderInstance.confirm();
-        assertEquals(CONFIRMED, validOrderInstance.getOrderState());
+        setHoursForNextCall(NON_EXPIRED_HOURS);
+        mockedOrderInstance.addItem(new OrderItem());
+        mockedOrderInstance.submit();
+        mockedOrderInstance.confirm();
+        assertEquals(CONFIRMED, mockedOrderInstance.getOrderState());
     }
 
     @Test
     void addingItemToExpiredOrderExpectingOrderStateException() {
+        setHoursForNextCall(EXPIRED_HOURS);
         try {
-            expiredOrderInstance.submit();
-            expiredOrderInstance.confirm();
+            mockedOrderInstance.submit();
+            mockedOrderInstance.confirm();
         } catch (OrderExpiredException e) {
-            assertThrowsExactly(OrderStateException.class, () -> expiredOrderInstance.addItem(new OrderItem()));
+            assertThrowsExactly(OrderStateException.class, () -> mockedOrderInstance.addItem(new OrderItem()));
         }
     }
 
     @Test
     void validRealizeCallExpectingRealizedState() {
-        validOrderInstance.addItem(new OrderItem());
-        validOrderInstance.submit();
-        validOrderInstance.confirm();
-        validOrderInstance.realize();
-        assertEquals(REALIZED, validOrderInstance.getOrderState());
+        setHoursForNextCall(NON_EXPIRED_HOURS);
+        mockedOrderInstance.addItem(new OrderItem());
+        mockedOrderInstance.submit();
+        mockedOrderInstance.confirm();
+        mockedOrderInstance.realize();
+        assertEquals(REALIZED, mockedOrderInstance.getOrderState());
     }
 
     @Test
     void invalidRealizeCallExpectingOrderStateException() {
-        validOrderInstance.addItem(new OrderItem());
-        validOrderInstance.submit();
+        setHoursForNextCall(NON_EXPIRED_HOURS);
+        mockedOrderInstance.addItem(new OrderItem());
+        mockedOrderInstance.submit();
 
-        assertThrowsExactly(OrderStateException.class, () -> validOrderInstance.realize());
+        assertThrowsExactly(OrderStateException.class, () -> mockedOrderInstance.realize());
+    }
+
+    private void setHoursForNextCall(int hours) {
+        Instant instant = Instant.now();
+        when(mockedClock.instant()).thenReturn(instant).thenReturn(instant.plus(hours, ChronoUnit.HOURS));
     }
 }
