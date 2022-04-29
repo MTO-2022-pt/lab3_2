@@ -1,24 +1,37 @@
 package edu.iis.mto.time;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.*;
+import java.time.temporal.ChronoUnit;
 
+@ExtendWith(MockitoExtension.class)
 class OrderTest {
     Order testOrder;
+    Instant testDate = Instant.parse("2005-04-02T21:37:00Z");
+    @Mock
+    Clock clock;
 
     @Test
     void expiredEmptyOrderThrows() {
-        testOrder = new Order(LocalDateTime.now().plusDays(2));
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        testOrder = new Order(clock);
+        when(clock.instant()).thenReturn(testDate).thenReturn(testDate.plus(2, ChronoUnit.DAYS));
         testOrder.submit();
         assertThrows(OrderExpiredException.class, () -> testOrder.confirm());
     }
 
     @Test
     void expiredEmptyOrderStateTest(){
-        testOrder = new Order(LocalDateTime.now().plusDays(2));
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        testOrder = new Order(clock);
+        when(clock.instant()).thenReturn(testDate).thenReturn(testDate.plus(2, ChronoUnit.DAYS));
         testOrder.submit();
         try{
             testOrder.confirm();
@@ -29,7 +42,9 @@ class OrderTest {
 
     @Test
     void coupleHoursOldOrder(){
-        testOrder = new Order(LocalDateTime.now().plusHours(5));
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        testOrder = new Order(clock);
+        when(clock.instant()).thenReturn(testDate).thenReturn(testDate.plus(2, ChronoUnit.HOURS));
         testOrder.submit();
         try{
             testOrder.confirm();
@@ -41,7 +56,9 @@ class OrderTest {
 
     @Test
     void validConfirmedEmptyOrder(){
-        testOrder = new Order(LocalDateTime.now());
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        testOrder = new Order(clock);
+        when(clock.instant()).thenReturn(testDate);
         testOrder.submit();
         testOrder.confirm();
         assertEquals(Order.State.CONFIRMED, testOrder.getOrderState());
@@ -49,7 +66,9 @@ class OrderTest {
 
     @Test
     void validRealizedEmptyOrder(){
-        testOrder = new Order(LocalDateTime.now());
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        testOrder = new Order(clock);
+        when(clock.instant()).thenReturn(testDate);
         testOrder.submit();
         testOrder.confirm();
         testOrder.realize();
@@ -58,7 +77,9 @@ class OrderTest {
 
     @Test
     void orderStateAfterAddingItem(){
-        testOrder = new Order(LocalDateTime.now());
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        testOrder = new Order(clock);
+        when(clock.instant()).thenReturn(testDate);
         testOrder.addItem(new OrderItem());
         assertEquals(Order.State.CREATED, testOrder.getOrderState());
         testOrder.submit();
@@ -69,7 +90,9 @@ class OrderTest {
 
     @Test
     void thoroughBehaviorTest(){
-        testOrder = new Order(LocalDateTime.now());
+        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        testOrder = new Order(clock);
+        when(clock.instant()).thenReturn(testDate);
         assertEquals(Order.State.CREATED, testOrder.getOrderState());
         testOrder.addItem(new OrderItem());
         assertEquals(Order.State.CREATED, testOrder.getOrderState());
