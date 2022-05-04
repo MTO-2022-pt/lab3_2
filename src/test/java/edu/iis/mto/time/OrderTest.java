@@ -5,8 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-
-import javax.sql.rowset.serial.SerialClob;
 import java.time.*;
 
 
@@ -21,19 +19,26 @@ class OrderTest {
     }
 
     @Test
-    void testOfTest(){
-        Instant instant = (Instant.EPOCH).atZone(ZoneOffset.UTC).withYear(1999).withDayOfYear(25).withHour(10).withMinute(16).withSecond(10).withNano(100).toInstant();
-        Mockito.when(clock.instant()).thenReturn(instant);
-        Mockito.when(clock.getZone()).thenReturn(ZoneOffset.UTC);
-        System.out.println(LocalDateTime.now(clock));
-        System.out.println(LocalDateTime.now());
+    void NoOffsetEmptyOrderItemStateTest() {
+        Order order = new Order();
+        assertEquals(order.getOrderState(), Order.State.CREATED);
     }
 
-//    @Test
-//    void OneSecondEmptyOrderItemStateTest() {
-//        Order order = new Order(LocalDateTime.now().plusSeconds(1));
-//        assertEquals(order.getOrderState(), Order.State.CREATED);
-//    }
+    @Test
+    void OneYearEmptyOrderItemStateTest() {
+        Instant instant1 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withYear(1999).toInstant();
+        Instant instant2 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withYear(2000).toInstant();
+        Mockito.when(clock.instant())
+                .thenReturn(instant1)
+                .thenReturn(instant2);
+        Mockito.when(clock.getZone())
+                .thenReturn(ZoneOffset.UTC);
+        Order order = new Order(clock);
+        order.submit();
+        assertThrows(OrderExpiredException.class, order::confirm);
+        assertEquals(order.getOrderState(), Order.State.CANCELLED);
+    }
+
 //
 //    @Test
 //    void OneSecondFromNowOneOrderItemStateTest() {

@@ -1,5 +1,6 @@
 package edu.iis.mto.time;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -11,10 +12,16 @@ public class Order {
     private static final long VALID_PERIOD_HOURS = 24;
     private State orderState;
     private List<OrderItem> items = new ArrayList<>();
-    private LocalDateTime subbmitionDate;
+    private LocalDateTime submissionDate;
+    private Clock clock;
+
+    public Order(Clock clock) {
+        orderState = State.CREATED;
+        this.clock = clock;
+    }
 
     public Order() {
-        orderState = State.CREATED;
+        this(Clock.systemDefaultZone());
     }
 
     public void addItem(OrderItem item) {
@@ -29,14 +36,14 @@ public class Order {
         requireState(State.CREATED);
 
         orderState = State.SUBMITTED;
-        subbmitionDate = LocalDateTime.now();
+        submissionDate = LocalDateTime.now(clock);
 
     }
 
     public void confirm() {
         requireState(State.SUBMITTED);
-        long hoursElapsedAfterSubmittion = subbmitionDate.until(LocalDateTime.now(), ChronoUnit.HOURS);
-        if (hoursElapsedAfterSubmittion > VALID_PERIOD_HOURS) {
+        long hoursElapsedAfterSubmission = submissionDate.until(LocalDateTime.now(clock), ChronoUnit.HOURS);
+        if (hoursElapsedAfterSubmission > VALID_PERIOD_HOURS) {
             orderState = State.CANCELLED;
             throw new OrderExpiredException();
         }
