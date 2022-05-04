@@ -19,20 +19,20 @@ class OrderTest {
     }
 
     @Test
-    void NoOffsetEmptyOrderItemStateTest() {
+    void noOffsetEmptyOrderItemStateTest() {
         Order order = new Order();
         assertEquals(order.getOrderState(), Order.State.CREATED);
     }
 
     @Test
-    void NoOffsetOneItemOrderItemStateTest() {
+    void noOffsetOneItemOrderItemStateTest() {
         Order order = new Order();
         order.addItem(new OrderItem());
         assertEquals(order.getOrderState(), Order.State.CREATED);
     }
 
     @Test
-    void NoOffsetFiveItemsOrderItemStateTest() {
+    void noOffsetFiveItemsOrderItemStateTest() {
         Order order = new Order();
         for(int i = 0; i < 5; i++){
             order.addItem(new OrderItem());
@@ -41,7 +41,7 @@ class OrderTest {
     }
 
     @Test
-    void NoOffsetFiveItemsOrderItemSubmittedStateTest() {
+    void noOffsetFiveItemsOrderItemSubmittedStateTest() {
         Order order = new Order();
         for(int i = 0; i < 5; i++){
             order.addItem(new OrderItem());
@@ -51,7 +51,7 @@ class OrderTest {
     }
 
     @Test
-    void NoOffsetFiveItemsOrderItemConfirmedStateTest() {
+    void noOffsetFiveItemsOrderItemConfirmedStateTest() {
         Order order = new Order();
         for (int i = 0; i < 5; i++) {
             order.addItem(new OrderItem());
@@ -62,7 +62,38 @@ class OrderTest {
     }
 
     @Test
-    void OneYearEmptyOrderItemStateTest() {
+    void noOffsetFiveItemsOrderItemRealizedStateTest() {
+        Order order = new Order();
+        for (int i = 0; i < 5; i++) {
+            order.addItem(new OrderItem());
+        }
+        order.submit();
+        order.confirm();
+        order.realize();
+        assertEquals(order.getOrderState(), Order.State.REALIZED);
+    }
+
+    @Test
+    void aFewOursItemsOrderItemRealizedStateTest() {
+        Instant instant1 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withHour(5).toInstant();
+        Instant instant2 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withHour(7).toInstant();
+        Mockito.when(clock.instant())
+                .thenReturn(instant1)
+                .thenReturn(instant2);
+        Mockito.when(clock.getZone())
+                .thenReturn(ZoneOffset.UTC);
+        Order order = new Order(clock);
+        for (int i = 0; i < 5; i++) {
+            order.addItem(new OrderItem());
+        }
+        order.submit();
+        order.confirm();
+        order.realize();
+        assertEquals(order.getOrderState(), Order.State.REALIZED);
+    }
+
+    @Test
+    void oneYearEmptyOrderItemStateTest() {
         Instant instant1 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withYear(1999).toInstant();
         Instant instant2 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withYear(2000).toInstant();
         Mockito.when(clock.instant())
@@ -77,7 +108,22 @@ class OrderTest {
     }
 
     @Test
-    void OneWeekEmptyOrderItemStateTest() {
+    void aFewMonthsEmptyOrderItemStateTest() {
+        Instant instant1 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withDayOfYear(100).toInstant();
+        Instant instant2 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withDayOfYear(200).toInstant();
+        Mockito.when(clock.instant())
+                .thenReturn(instant1)
+                .thenReturn(instant2);
+        Mockito.when(clock.getZone())
+                .thenReturn(ZoneOffset.UTC);
+        Order order = new Order(clock);
+        order.submit();
+        assertThrows(OrderExpiredException.class, order::confirm);
+        assertEquals(order.getOrderState(), Order.State.CANCELLED);
+    }
+
+    @Test
+    void oneWeekEmptyOrderItemStateTest() {
         Instant instant1 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withDayOfYear(7).toInstant();
         Instant instant2 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withDayOfYear(14).toInstant();
         Mockito.when(clock.instant())
@@ -88,6 +134,41 @@ class OrderTest {
         Order order = new Order(clock);
         order.submit();
         assertThrows(OrderExpiredException.class, order::confirm);
+        assertEquals(order.getOrderState(), Order.State.CANCELLED);
+    }
+
+    @Test
+    void oneDayAndABitMoreEmptyOrderItemStateTest() {
+        Instant instant1 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withDayOfYear(7).toInstant();
+        Instant instant2 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withDayOfYear(8).withHour(1).withSecond(1).toInstant();
+        Mockito.when(clock.instant())
+                .thenReturn(instant1)
+                .thenReturn(instant2);
+        Mockito.when(clock.getZone())
+                .thenReturn(ZoneOffset.UTC);
+        Order order = new Order(clock);
+        order.submit();
+        assertThrows(OrderExpiredException.class, order::confirm);
+        assertEquals(order.getOrderState(), Order.State.CANCELLED);
+    }
+
+    @Test
+    void oneDayAndABitMoreFiveItemsOrderItemStatesTest() {
+        Instant instant1 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withDayOfYear(7).toInstant();
+        Instant instant2 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withDayOfYear(8).withHour(1).withSecond(1).toInstant();
+        Mockito.when(clock.instant())
+                .thenReturn(instant1)
+                .thenReturn(instant2);
+        Mockito.when(clock.getZone())
+                .thenReturn(ZoneOffset.UTC);
+        Order order = new Order(clock);
+        for(int i = 0 ; i < 5; i++){
+            order.addItem(new OrderItem());
+        }
+        order.submit();
+        assertThrows(OrderExpiredException.class, order::confirm);
+        assertEquals(order.getOrderState(), Order.State.CANCELLED);
+        assertThrows(OrderStateException.class, order::realize);
         assertEquals(order.getOrderState(), Order.State.CANCELLED);
     }
 
@@ -104,119 +185,5 @@ class OrderTest {
         order.submit();
         assertEquals(order.getOrderState(), Order.State.SUBMITTED);
     }
-
-    @Test
-    void oneDayAndABitMoreEmptyOrderItemStateTest() { //one day passed... and, still alright?
-        Instant instant1 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withDayOfYear(7).toInstant();
-        Instant instant2 = (Instant.EPOCH).atZone(ZoneOffset.UTC).withDayOfYear(8).withHour(1).withSecond(1).toInstant();
-        Mockito.when(clock.instant())
-                .thenReturn(instant1)
-                .thenReturn(instant2);
-        Mockito.when(clock.getZone())
-                .thenReturn(ZoneOffset.UTC);
-        Order order = new Order(clock);
-        order.submit();
-        assertThrows(OrderExpiredException.class, order::confirm);
-        assertEquals(order.getOrderState(), Order.State.CANCELLED);
-    }
-
-//
-//    @Test
-//    void tenMinutesFromNowOneOrderItemStateTest() {
-//        Order order = new Order(LocalDateTime.now().plusMinutes(10));
-//        order.addItem(new OrderItem());
-//        order.submit();
-//        assertEquals(order.getOrderState(), Order.State.SUBMITTED);
-//    }
-//
-//    @Test
-//    void tenMinutesFromNowFiveOrderItemsStateTest() {
-//        Order order = new Order(LocalDateTime.now().plusMinutes(10));
-//        for(int i = 0; i< 5; i++){
-//            order.addItem(new OrderItem());
-//        }
-//        order.submit();
-//        assertEquals(order.getOrderState(), Order.State.SUBMITTED);
-//    }
-//
-//    @Test
-//    void sevenHoursFromNowFiveOrderItemsStateTest() {
-//        Order order = new Order(LocalDateTime.now().plusHours(7));
-//        for(int i = 0; i< 5; i++){
-//            order.addItem(new OrderItem());
-//        }
-//        order.submit();
-//        order.confirm();
-//        assertEquals(order.getOrderState(), Order.State.CONFIRMED);
-//    }
-//
-//    @Test
-//    void moreThanTwelveHoursFromNowFiveOrderItemsStateTest() {
-//        Order order = new Order(LocalDateTime.now().plusHours(14));
-//        for(int i = 0; i< 5; i++){
-//            order.addItem(new OrderItem());
-//        }
-//        order.submit();
-//        order.confirm();
-//        assertEquals(order.getOrderState(), Order.State.CONFIRMED);
-//    }
-//
-//    @Test
-//    void OneDayFromNowFiveOrderItemsStateTest() { //almost a day passed
-//        Order order = new Order(LocalDateTime.now().plusDays(1));
-//        for(int i = 0; i< 5; i++){
-//            order.addItem(new OrderItem());
-//        }
-//        order.submit();
-//        order.confirm();
-//        assertEquals(order.getOrderState(), Order.State.CONFIRMED);
-//    }
-//
-//    @Test
-//    void OneDayAndABitMoreFromNowFiveOrderItemsStateTest() { //more than 24 hours... correct?
-//        Order order = new Order(LocalDateTime.now().plusDays(1).plusHours(1));
-//        for(int i = 0; i< 5; i++){
-//            order.addItem(new OrderItem());
-//        }
-//        order.submit();
-//        order.confirm();
-//        assertEquals(order.getOrderState(), Order.State.CONFIRMED);
-//    }
-//
-//    @Test
-//    void timeoutOrderStatesTest() {
-//        Order order = new Order(LocalDateTime.now().plusDays(1).plusHours(1).plusSeconds(1));
-//        for(int i = 0; i< 5; i++){
-//            order.addItem(new OrderItem());
-//        }
-//        order.submit();
-//        assertThrows(OrderExpiredException.class, order::confirm);
-//        assertEquals(order.getOrderState(), Order.State.CANCELLED);
-//    }
-//
-//    @Test
-//    void OneDayAndTwoHoursFromNowFiveOrderItemsStateTest() {
-//        Order order = new Order(LocalDateTime.now().plusDays(1).plusHours(2));
-//        for(int i = 0; i< 5; i++){
-//            order.addItem(new OrderItem());
-//        }
-//        order.submit();
-//        assertThrows(OrderExpiredException.class, order::confirm);
-//        assertEquals(order.getOrderState(), Order.State.CANCELLED);
-//        assertThrows(OrderStateException.class, order::realize);
-//        assertEquals(order.getOrderState(), Order.State.CANCELLED);
-//    }
-//
-//    @Test
-//    void tenMinutesFromNowFiveOrderItemsRealizedStateTest() {
-//        Order order = new Order(LocalDateTime.now().plusMinutes(10));
-//        for(int i = 0; i< 5; i++){
-//            order.addItem(new OrderItem());
-//        }
-//        order.submit();
-//        order.confirm();
-//        order.realize();
-//        assertEquals(order.getOrderState(), Order.State.REALIZED);
-//    }
 
 }
