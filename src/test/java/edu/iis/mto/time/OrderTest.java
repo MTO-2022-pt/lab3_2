@@ -13,9 +13,6 @@ import java.time.*;
 class OrderTest {
 
     @Mock
-    LocalDateTime localDateTime;
-
-    @Mock
     Clock clock;
 
     @BeforeEach
