@@ -1,10 +1,10 @@
 package edu.iis.mto.time;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 
 class OrderTest {
 
@@ -18,12 +18,12 @@ class OrderTest {
     @Test
     void shouldThrowOrderExpiredException() {
         long nextDaySec = 48 * 60 * 60;
-        fakeClock.nextInstant(nextDaySec);
         Order order = new Order(fakeClock);
 
         order.addItem(new OrderItem());
         order.submit();
-        
+
+        fakeClock.nextInstant(nextDaySec);
         assertThrows(OrderExpiredException.class, () -> {
             order.confirm();
         });
@@ -32,12 +32,12 @@ class OrderTest {
     @Test
     void shouldNotThrowOrderExpiredException() {
         long nextDaySec = 10 * 60 * 60;
-        fakeClock.nextInstant(nextDaySec);
         Order order = new Order(fakeClock);
 
         order.addItem(new OrderItem());
         order.submit();
-        
+
+        fakeClock.nextInstant(nextDaySec);
         assertDoesNotThrow(() -> {
             order.confirm();
         });
